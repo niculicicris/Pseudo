@@ -31,7 +31,7 @@ public class Interpreter {
         Parser parser = new Parser(source, tokens);
         List<Expression> parseTree = parser.getParseTree();
 
-        Evaluator evaluator = new Evaluator(parseTree);
+        Evaluator evaluator = new Evaluator(source, parseTree);
         evaluator.evaluate();
     }
 }

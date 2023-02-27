@@ -44,9 +44,27 @@ public class ErrorManager {
         System.exit(0);
     }
 
+    public static void throwUnexpectedTokenError(String source, Token token, String expected) {
+        String sourceLine = source.split("\n")[token.line()];
+
+        System.out.println("(" + token.line() + ":" + token.column() + ") EROARE: Un simbol neasteptat a fost gasit. Se astepta " +
+                "un simbol de tip '" + expected + "'.");
+        System.out.println(sourceLine);
+        System.out.println(" ".repeat(token.column()) + "~".repeat(token.text().length()));
+
+        System.exit(0);
+    }
+
     public static void throwIndentError(String source, int line) {
-        System.out.println("(" + line + ") EROARE: Indentarea de pe aceasta linie nu este valida.");
-        System.out.println(source.split("\n")[line]);
+        String sourceLine = source.split("\n")[line];
+
+        System.out.println("EROARE: Indentarea de pe linia " + line + " nu este valida.");
+        System.out.println(sourceLine);
+        for (char ch : sourceLine.toCharArray()) {
+            if (ch != ' ') break;
+            System.out.print("~");
+        }
+        System.out.println();
 
         System.exit(0);
     }
@@ -56,18 +74,24 @@ public class ErrorManager {
         System.exit(0);
     }
 
-    public static void throwInvalidVariableError(String identifier) {
-        System.out.println("EROARE: '" + identifier + "' nu este un identificator pentru o variabila.");
+    public static void throwInvalidVariableError(String source, int line, String identifier) {
+        System.out.println("EROARE: '" + identifier + "' de pe linia " + line + " nu este un identificator pentru o variabila.");
+        System.out.println(source.split("\n")[line]);
+
         System.exit(0);
     }
 
-    public static void throwIntegerDivisionError() {
-        System.out.println("EROARE: Impartirea numerelor intregi nu poate sa fie efectuata pe valori reale.");
+    public static void throwIntegerDivisionError(String source, int line) {
+        System.out.println("EROARE: Impartirea numerelor intregi de pe linia " + line + " nu poate sa fie efectuata pe valori reale.");
+        System.out.println(source.split("\n")[line]);
+
         System.exit(0);
     }
 
-    public static void throwZeroDivisionError() {
-        System.out.print("EROARE: Impartirea la 0 este nedefinita.");
+    public static void throwZeroDivisionError(String source, int line) {
+        System.out.println("EROARE: Impartirea de pe linia " + line + " nu poate sa fie facuta la 0.");
+        System.out.println(source.split("\n")[line]);
+
         System.exit(0);
     }
 

@@ -50,7 +50,7 @@ public class Parser {
         if (parseDoWhileExpression(token.type())) return true;
         if (parseRepeatUntilExpression(token.type())) return true;
 
-        throwUnexpectedTokenError();
+        ErrorManager.throwUnexpectedTokenError(source, token);
 
         return false;
     }
@@ -59,13 +59,14 @@ public class Parser {
         if (type != TokenType.IDENTIFIER) return false;
 
         if (!match(TokenType.ASSIGNMENT)) {
-            throwUnexpectedTokenError();
+            throwUnexpectedTokenError("<-");
             return false;
         }
-        parseTree.add(new AssignmentExpression(peekBackwards(2).text(), parseValueExpression(2, 2)));
+        parseTree.add(new AssignmentExpression(peekBackwards(2).text(), peekBackwards(1).line(),
+                parseValueExpression(2, 2)));
 
         if (!match(TokenType.EOL, TokenType.EOF))
-            throwUnexpectedTokenError();
+            throwUnexpectedTokenError("sfarsit de linie");
 
         return true;
     }
@@ -83,7 +84,7 @@ public class Parser {
             Expression right = (priority == 1) ? parseValue(originalPriority)
                     : parseValueExpression(priority - 1, priority);
 
-            left = new BinaryExpression(left, operator, right);
+            left = new BinaryExpression(left, operator, right, getToken().line());
         }
 
         return left;
@@ -114,12 +115,12 @@ public class Parser {
     private Expression parseValue(int originalPriority) {
         if (match(TokenType.INTEGER)) return new IntegerExpression(peekBackwards(1).text());
         if (match(TokenType.REAL)) return new RealExpression(peekBackwards(1).text());
-        if (match(TokenType.IDENTIFIER)) return new IdentifierExpression(peekBackwards(1).text());
+        if (match(TokenType.IDENTIFIER)) return new IdentifierExpression(peekBackwards(1).text(), peekBackwards(1).line());
         if (match(TokenType.OPEN_BRACKET)) {
             Expression value = parseValueExpression(originalPriority, originalPriority);
 
             if (!match(TokenType.CLOSE_BRACKET))
-                throwUnexpectedTokenError();
+                throwUnexpectedTokenError(")");
 
             return value;
         }
@@ -128,16 +129,16 @@ public class Parser {
             Expression left = parseValue(originalPriority);
 
             if (!match(TokenType.DIVIDE))
-                throwUnexpectedTokenError();
+                throwUnexpectedTokenError("/");
 
             Expression right = parseValue(originalPriority);
 
             if (!match(TokenType.CLOSE_SQUARE_BRACKET))
-                throwUnexpectedTokenError();
+                throwUnexpectedTokenError("]");
 
-            return new BinaryExpression(left, TokenType.INTEGER_DIVIDE, right);
+            return new BinaryExpression(left, TokenType.INTEGER_DIVIDE, right, getToken().line());
         }
-        throwUnexpectedTokenError();
+        throwUnexpectedTokenError("identificator sau valoare numerica");
 
         return null;
     }
@@ -147,25 +148,25 @@ public class Parser {
         List<IdentifierExpression> identifiers = new ArrayList<>();
 
         if (!match(TokenType.IDENTIFIER)) {
-            ErrorManager.throwUnexpectedTokenError(source, getToken());
+            throwUnexpectedTokenError("identificator");
             return false;
         }
-        identifiers.add(new IdentifierExpression(peekBackwards(1).text()));
+        identifiers.add(new IdentifierExpression(peekBackwards(1).text(), peekBackwards(1).line()));
 
         boolean nextIsComma = true;
         while (!match(TokenType.EOL, TokenType.EOF)) {
             if (nextIsComma && !match(TokenType.COMMA)) {
-                throwUnexpectedTokenError();
+                throwUnexpectedTokenError(",");
                 return false;
             }
 
             if (!nextIsComma && !match(TokenType.IDENTIFIER)) {
-                throwUnexpectedTokenError();
+                throwUnexpectedTokenError("identificator");
                 return false;
             }
 
             if (!nextIsComma)
-                identifiers.add(new IdentifierExpression(peekBackwards(1).text()));
+                identifiers.add(new IdentifierExpression(peekBackwards(1).text(), peekBackwards(1).line()));
 
             nextIsComma = !nextIsComma;
         }
@@ -187,7 +188,7 @@ public class Parser {
         boolean nextIsComma = true;
         while (!match(TokenType.EOL, TokenType.EOF)) {
             if (nextIsComma && !match(TokenType.COMMA)) {
-                throwUnexpectedTokenError();
+                throwUnexpectedTokenError(",");
                 return false;
             }
 
@@ -212,12 +213,12 @@ public class Parser {
         Expression condition = parseValueExpression(4, 4);
 
         if (!match(TokenType.THEN)) {
-            throwUnexpectedTokenError();
+            throwUnexpectedTokenError("atunci");
             return false;
         }
 
         if (!match(TokenType.EOL, TokenType.EOF)) {
-            throwUnexpectedTokenError();
+            throwUnexpectedTokenError("sfarsit de linie");
             return false;
         }
         List<Expression> body = parseBody();
@@ -230,14 +231,14 @@ public class Parser {
             }
 
             if (!match(TokenType.EOL, TokenType.EOF)) {
-                throwUnexpectedTokenError();
+                throwUnexpectedTokenError("sfarsit de linie");
                 return false;
             }
 
             elseBody = parseBody();
         }
 
-        parseEnd(type);
+        parseEnd(type, "daca");
         parseTree.add(new IfExpression(condition, body, elseBody));
 
         return true;
@@ -247,19 +248,19 @@ public class Parser {
         if (type != TokenType.FOR) return false;
 
         if (!match(TokenType.IDENTIFIER)) {
-            throwUnexpectedTokenError();
+            throwUnexpectedTokenError("identificator");
             return false;
         }
 
         if (!match(TokenType.ASSIGNMENT)) {
-            throwUnexpectedTokenError();
+            throwUnexpectedTokenError("<-");
             return false;
         }
-        AssignmentExpression assignment = new AssignmentExpression(peekBackwards(2).text(),
+        AssignmentExpression assignment = new AssignmentExpression(peekBackwards(2).text(), peekBackwards(1).line(),
                 parseValueExpression(2, 2));
 
         if (!match(TokenType.COMMA)) {
-            throwUnexpectedTokenError();
+            throwUnexpectedTokenError(",");
             return false;
         }
         Expression limit = parseValueExpression(2, 2);
@@ -268,17 +269,17 @@ public class Parser {
         if (match(TokenType.COMMA)) step = parseValueExpression(2, 2);
 
         if (!match(TokenType.EXECUTE)) {
-            throwUnexpectedTokenError();
+            throwUnexpectedTokenError("executa");
             return false;
         }
 
         if (!match(TokenType.EOL, TokenType.EOF)) {
-            throwUnexpectedTokenError();
+            throwUnexpectedTokenError("sfarsit de linie");
             return false;
         }
         List<Expression> body = parseBody();
 
-        parseEnd(type);
+        parseEnd(type, "pentru");
         parseTree.add(new ForExpression(assignment, limit, step, body));
 
         return true;
@@ -289,17 +290,17 @@ public class Parser {
         Expression condition = parseValueExpression(4, 4);
 
         if (!match(TokenType.EXECUTE)) {
-            throwUnexpectedTokenError();
+            throwUnexpectedTokenError("executa");
             return false;
         }
 
         if (!match(TokenType.EOL, TokenType.EOF)) {
-            throwUnexpectedTokenError();
+            throwUnexpectedTokenError("sfarsit de linie");
             return false;
         }
         List<Expression> body = parseBody();
 
-        parseEnd(type);
+        parseEnd(type, "cattimp");
         parseTree.add(new WhileExpression(condition, body));
 
         return true;
@@ -309,13 +310,13 @@ public class Parser {
         if (type != TokenType.EXECUTE) return false;
 
         if (!match(TokenType.EOL, TokenType.EOF)) {
-            throwUnexpectedTokenError();
+            throwUnexpectedTokenError("sfarsit de linie");
             return false;
         }
         List<Expression> body = parseBody();
 
         if (!match(TokenType.WHILE)) {
-            throwUnexpectedTokenError();
+            throwUnexpectedTokenError("cattimp");
             return false;
         }
 
@@ -326,7 +327,7 @@ public class Parser {
         Expression condition = parseValueExpression(4, 4);
 
         if (!match(TokenType.EOL, TokenType.EOF)) {
-            throwUnexpectedTokenError();
+            throwUnexpectedTokenError("sfarsit de linie");
             return false;
         }
 
@@ -339,13 +340,13 @@ public class Parser {
         if (type != TokenType.REPEAT) return false;
 
         if (!match(TokenType.EOL, TokenType.EOF)) {
-            throwUnexpectedTokenError();
+            throwUnexpectedTokenError("sfarsit de linie");
             return false;
         }
         List<Expression> body = parseBody();
 
         if (!match(TokenType.UNTIL)) {
-            throwUnexpectedTokenError();
+            throwUnexpectedTokenError("panacand");
             return false;
         }
 
@@ -356,7 +357,7 @@ public class Parser {
         Expression condition = parseValueExpression(4, 4);
 
         if (!match(TokenType.EOL, TokenType.EOF)) {
-            throwUnexpectedTokenError();
+            throwUnexpectedTokenError("sfarsit de linie");
             return false;
         }
 
@@ -380,7 +381,7 @@ public class Parser {
         return body;
     }
 
-    private void parseEnd(TokenType type) {
+    private void parseEnd(TokenType type, String expected) {
         if (!match(TokenType.END)) return;
 
         if (!hasValidIndent(peekBackwards(1))) {
@@ -389,16 +390,16 @@ public class Parser {
         }
 
         if (!match(type)) {
-            throwUnexpectedTokenError();
+            throwUnexpectedTokenError(expected);
             return;
         }
 
         if (!match(TokenType.EOL, TokenType.EOF))
-            throwUnexpectedTokenError();
+            throwUnexpectedTokenError("sfarsit de linie");
     }
 
-    private void throwUnexpectedTokenError() {
-        ErrorManager.throwUnexpectedTokenError(source, getToken());
+    private void throwUnexpectedTokenError(String expected) {
+        ErrorManager.throwUnexpectedTokenError(source, getToken(), expected);
     }
 
     private Token getToken() {

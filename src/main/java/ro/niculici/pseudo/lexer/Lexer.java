@@ -164,6 +164,11 @@ public class Lexer {
                 return true;
             }
 
+            case "MOD" -> {
+                addToken(TokenType.MODULO, word, line, column);
+                return true;
+            }
+
             case "citeste" -> {
                 addToken(TokenType.READ, word, line, column);
                 return true;

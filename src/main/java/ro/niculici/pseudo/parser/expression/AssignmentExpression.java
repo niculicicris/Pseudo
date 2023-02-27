@@ -4,8 +4,8 @@ public class AssignmentExpression extends Expression {
     private final IdentifierExpression identifier;
     private final Expression value;
 
-    public AssignmentExpression(String identifier, Expression value) {
-        this.identifier = new IdentifierExpression(identifier);
+    public AssignmentExpression(String identifier, int line, Expression value) {
+        this.identifier = new IdentifierExpression(identifier, line);
         this.value = value;
     }
 

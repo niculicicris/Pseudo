@@ -10,10 +10,12 @@ import java.util.List;
 import java.util.Scanner;
 
 public class Evaluator {
+    private final String source;
     private final List<Expression> parseTree;
     private VariableManager variableManager;
 
-    public Evaluator(List<Expression> parseTree) {
+    public Evaluator(String source, List<Expression> parseTree) {
+        this.source = source;
         this.parseTree = parseTree;
     }
 
@@ -70,7 +72,7 @@ public class Evaluator {
 
         if (expression instanceof IdentifierExpression identifier) {
             if (!variableManager.containsVariable(identifier.getIdentifier())) {
-                ErrorManager.throwInvalidVariableError(identifier.getIdentifier());
+                ErrorManager.throwInvalidVariableError(source, identifier.getLine(), identifier.getIdentifier());
                 return identifier;
             }
             Variable variable = variableManager.getVariable(identifier.getIdentifier());
@@ -98,15 +100,22 @@ public class Evaluator {
             case PLUS -> result = leftValue + rightValue;
             case MINUS -> result = leftValue - rightValue;
             case STAR -> result = leftValue * rightValue;
-            case DIVIDE -> result = leftValue / rightValue;
+            case DIVIDE -> {
+                if (rightValue == 0) {
+                    ErrorManager.throwZeroDivisionError(source, binary.getLine());
+                    break;
+                }
+
+                result = leftValue / rightValue;
+            }
             case INTEGER_DIVIDE -> {
                 if (resultType == VariableType.REAL) {
-                    ErrorManager.throwIntegerDivisionError();
+                    ErrorManager.throwIntegerDivisionError(source, binary.getLine());
                     break;
                 }
 
                 if (rightValue == 0) {
-                    ErrorManager.throwZeroDivisionError();
+                    ErrorManager.throwZeroDivisionError(source, binary.getLine());
                     break;
                 }
                 int integerResult = ((int) leftValue) / ((int) rightValue);
@@ -115,12 +124,12 @@ public class Evaluator {
             }
             default -> {
                 if (resultType == VariableType.REAL) {
-                    ErrorManager.throwIntegerDivisionError();
+                    ErrorManager.throwIntegerDivisionError(source, binary.getLine());
                     break;
                 }
 
                 if (rightValue == 0) {
-                    ErrorManager.throwZeroDivisionError();
+                    ErrorManager.throwZeroDivisionError(source, binary.getLine());
                     break;
                 }
 
@@ -177,7 +186,7 @@ public class Evaluator {
     }
 
     private void evaluateIfExpression(IfExpression expression) {
-        BooleanExpression condition = (BooleanExpression) evaluateConditionExpression(expression.getCondition());
+        BooleanExpression condition = evaluateConditionExpression(expression.getCondition());
 
         variableManager.increaseScope();
         if (condition.getValue())
@@ -222,12 +231,12 @@ public class Evaluator {
     }
 
     private void evaluateWhileExpression(WhileExpression expression) {
-        BooleanExpression condition = (BooleanExpression) evaluateConditionExpression(expression.getCondition());
+        BooleanExpression condition = evaluateConditionExpression(expression.getCondition());
 
         variableManager.increaseScope();
         while (condition.getValue()) {
             expression.getBody().forEach(this::evaluateExpression);
-            condition = (BooleanExpression) evaluateConditionExpression(expression.getCondition());
+            condition = evaluateConditionExpression(expression.getCondition());
         }
         variableManager.decreaseScope();
     }
@@ -238,7 +247,7 @@ public class Evaluator {
         variableManager.increaseScope();
         do {
             expression.getBody().forEach(this::evaluateExpression);
-            condition = (BooleanExpression) evaluateConditionExpression(expression.getCondition());
+            condition = evaluateConditionExpression(expression.getCondition());
         } while (condition.getValue());
         variableManager.decreaseScope();
     }
@@ -249,18 +258,22 @@ public class Evaluator {
         variableManager.increaseScope();
         do {
             expression.getBody().forEach(this::evaluateExpression);
-            condition = (BooleanExpression) evaluateConditionExpression(expression.getCondition());
+            condition = evaluateConditionExpression(expression.getCondition());
         } while (!condition.getValue());
         variableManager.decreaseScope();
     }
 
-    private Expression evaluateConditionExpression(Expression expression) {
+    private BooleanExpression evaluateConditionExpression(Expression expression) {
+        return new BooleanExpression(getNumericalValue(evaluateConditionValueExpression(expression)) == 1);
+    }
+
+    private Expression evaluateConditionValueExpression(Expression expression) {
         if (expression instanceof IntegerExpression) return expression;
         if (expression instanceof RealExpression) return expression;
 
         if (expression instanceof IdentifierExpression identifier) {
             if (!variableManager.containsVariable(identifier.getIdentifier())) {
-                ErrorManager.throwInvalidVariableError(identifier.getIdentifier());
+                ErrorManager.throwInvalidVariableError(source, identifier.getLine(), identifier.getIdentifier());
                 return identifier;
             }
             Variable variable = variableManager.getVariable(identifier.getIdentifier());
@@ -272,7 +285,7 @@ public class Evaluator {
         }
 
         if (expression instanceof UnaryExpression unary) {
-            Expression right = evaluateConditionExpression(unary.getRight());
+            Expression right = evaluateConditionValueExpression(unary.getRight());
 
             if (right instanceof BooleanExpression bool)
                 return new BooleanExpression(!bool.getValue());
@@ -284,8 +297,8 @@ public class Evaluator {
         int resultType = 0;
         double leftValue, rightValue, result = 0;
 
-        Expression left = evaluateConditionExpression(binary.getLeft());
-        Expression right = evaluateConditionExpression(binary.getRight());
+        Expression left = evaluateConditionValueExpression(binary.getLeft());
+        Expression right = evaluateConditionValueExpression(binary.getRight());
 
         leftValue = getNumericalValue(left);
         rightValue = getNumericalValue(right);
@@ -306,15 +319,22 @@ public class Evaluator {
             case PLUS -> result = leftValue + rightValue;
             case MINUS -> result = leftValue - rightValue;
             case STAR -> result = leftValue * rightValue;
-            case DIVIDE -> result = leftValue / rightValue;
+            case DIVIDE -> {
+                if (rightValue == 0) {
+                    ErrorManager.throwZeroDivisionError(source, binary.getLine());
+                    break;
+                }
+
+                result = leftValue / rightValue;
+            }
             case INTEGER_DIVIDE -> {
                 if (resultType == 1) {
-                    ErrorManager.throwIntegerDivisionError();
+                    ErrorManager.throwIntegerDivisionError(source, binary.getLine());
                     break;
                 }
 
                 if (rightValue == 0) {
-                    ErrorManager.throwZeroDivisionError();
+                    ErrorManager.throwZeroDivisionError(source, binary.getLine());
                     break;
                 }
                 int integerResult = ((int) leftValue) / ((int) rightValue);
@@ -323,12 +343,12 @@ public class Evaluator {
             }
             case MODULO -> {
                 if (resultType == 1) {
-                    ErrorManager.throwIntegerDivisionError();
+                    ErrorManager.throwIntegerDivisionError(source, binary.getLine());
                     break;
                 }
 
                 if (rightValue == 0) {
-                    ErrorManager.throwZeroDivisionError();
+                    ErrorManager.throwZeroDivisionError(source, binary.getLine());
                     break;
                 }
 
@@ -370,7 +390,12 @@ public class Evaluator {
             case OR -> result = (leftValue == 1 || rightValue == 1) ? 1 : 0;
         }
 
-        return new BooleanExpression(result == 1);
+        if (resultType == 0)
+            return new IntegerExpression((int) result);
+        else if (resultType == 1)
+            return new RealExpression(result);
+        else
+            return new BooleanExpression(result == 1);
     }
 
     private double getNumericalValue(Expression expression) {
