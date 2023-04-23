@@ -286,12 +286,7 @@ public class Parser {
     }
 
     private boolean parseWhileExpression(TokenType type) {
-        if (type != TokenType.WHILE && type != TokenType.WHILE_1) return false;
-
-        if (type == TokenType.WHILE_1 && !match(TokenType.WHILE_2)) {
-            throwUnexpectedTokenError("timp");
-            return false;
-        }
+        if (type != TokenType.WHILE) return false;
         Expression condition = parseValueExpression(4, 4);
 
         if (!match(TokenType.EXECUTE)) {
@@ -320,22 +315,12 @@ public class Parser {
         }
         List<Expression> body = parseBody();
 
-        if (!match(TokenType.WHILE) && !match(TokenType.WHILE_1)) {
-            throwUnexpectedTokenError("cat timp");
+        if (!match(TokenType.WHILE)) {
+            throwUnexpectedTokenError("cattimp");
             return false;
         }
 
-        if (peekBackwards(1).type() == TokenType.WHILE_1 && !match(TokenType.WHILE_2)) {
-            throwUnexpectedTokenError("timp");
-            return false;
-        }
-
-        if (peekBackwards(1).type() == TokenType.WHILE && !hasValidIndent(peekBackwards(1))) {
-            ErrorManager.throwIndentError(source, peekBackwards(1).line());
-            return false;
-        }
-
-        if (peekBackwards(1).type() == TokenType.WHILE_2 && !hasValidIndent(peekBackwards(2))) {
+        if (!hasValidIndent(peekBackwards(1))) {
             ErrorManager.throwIndentError(source, peekBackwards(1).line());
             return false;
         }
@@ -360,22 +345,12 @@ public class Parser {
         }
         List<Expression> body = parseBody();
 
-        if (!match(TokenType.UNTIL) && !match(TokenType.UNTIL_1)) {
-            throwUnexpectedTokenError("pana cand");
+        if (!match(TokenType.UNTIL)) {
+            throwUnexpectedTokenError("panacand");
             return false;
         }
 
-        if (peekBackwards(1).type() == TokenType.UNTIL_1 && !match(TokenType.UNTIL_2)) {
-            throwUnexpectedTokenError("cand");
-            return false;
-        }
-
-        if (peekBackwards(1).type() == TokenType.UNTIL && !hasValidIndent(peekBackwards(1))) {
-            ErrorManager.throwIndentError(source, peekBackwards(1).line());
-            return false;
-        }
-
-        if (peekBackwards(1).type() == TokenType.UNTIL_2 && !hasValidIndent(peekBackwards(2))) {
+        if (!hasValidIndent(peekBackwards(1))) {
             ErrorManager.throwIndentError(source, peekBackwards(1).line());
             return false;
         }
@@ -441,7 +416,7 @@ public class Parser {
     }
 
     private Token peekBackwards(int depth) {
-        return tokens.get(Math.max(index - depth, 0));
+        return tokens.get(index - depth);
     }
 
     private boolean match(TokenType ... types) {

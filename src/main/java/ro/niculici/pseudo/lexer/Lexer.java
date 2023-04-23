@@ -214,16 +214,6 @@ public class Lexer {
                 return true;
             }
 
-            case "cat" -> {
-                addToken(TokenType.WHILE_1, word, line, column);
-                return true;
-            }
-
-            case "timp" -> {
-                addToken(TokenType.WHILE_2, word, line, column);
-                return true;
-            }
-
             case "repeta" -> {
                 addToken(TokenType.REPEAT, word, line, column);
                 return true;
@@ -241,16 +231,6 @@ public class Lexer {
 
             case "panacand" -> {
                 addToken(TokenType.UNTIL, word, line, column);
-                return true;
-            }
-
-            case "pana" -> {
-                addToken(TokenType.UNTIL_1, word, line, column);
-                return true;
-            }
-
-            case "cand" -> {
-                addToken(TokenType.UNTIL_2, word, line, column);
                 return true;
             }
 
