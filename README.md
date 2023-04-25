@@ -6,7 +6,7 @@ a IX-a.
 ### Instalare Windows ###
 Pentru a instala Pseudo pe Windows, urmariti urmatoarele etape:
 
-1. Extragem continutului arhivei intr-o locatie aleasa. In cadrul
+1. Extragem continutul arhivei intr-o locatie aleasa. In cadrul
 acestui exemplu, continutul va fi extras pe Desktop.
 ![2](https://user-images.githubusercontent.com/106548675/234226422-bb92a435-b12b-4915-ab5e-d9a5e9208bdd.png)
 
@@ -29,7 +29,7 @@ apasam butonul de editare.
 ### Instalare MacOS ###
 Pentru a instala Pseudo pe MacOS, urmariti urmatoarele etape:
 
-1. Extragem continutului arhivei intr-o locatie aleasa. In cadrul
+1. Extragem continutul arhivei intr-o locatie aleasa. In cadrul
 acestui exemplu, continutul va fi extras pe Desktop.
 ![1](https://user-images.githubusercontent.com/106548675/234228491-629641e0-6170-4fed-8501-096a08c13054.png)
 
